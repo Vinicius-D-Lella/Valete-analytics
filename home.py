@@ -8,7 +8,6 @@ import pytz
 
 st.markdown("""
     <style>
-        /* Centraliza todo o conteúdo */
         .block-container {
             display: flex;
             flex-direction: column;
@@ -21,40 +20,6 @@ st.markdown("""
 conn = st.connection("sql")
 st.title("Resumo do Dia")
 st.subheader(date.today().strftime("%d/%m"))
-views = conn.query('''
-                   SELECT 
-                   "contentId",
-                   "Content"."title" AS "contentTitle",
-                   "Content"."moduleId" AS "moduleId",
-                   "Module"."name" AS "moduleName",
-                   SUM(CASE WHEN "totalViews" > 10 THEN 10 ELSE "totalViews" END) AS "totalViews"
-                   FROM public."ContentView"
-                   INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
-                   INNER JOIN public."Module" ON "Module"."id" = "Content"."moduleId"
-                   WHERE "totalViews" != 0
-                   GROUP BY "contentId","moduleId","contentTitle","moduleName"
-                   ;''')
-
-tabelaModule = []
-
-views = pd.DataFrame(views)
-views = views.sort_values(by="totalViews", ascending=False)
-
-
-for row in views.itertuples():
-    if row.moduleId not in [item["id"] for item in tabelaModule]:
-        tabelaModule.append({
-            "id": row.moduleId,
-            "title": row.moduleName,
-            "totalModuleViews": row.totalViews
-        })
-    else:
-        for item in tabelaModule:
-            if item["id"] == row.moduleId:
-                item["totalModuleViews"] += row.totalViews
-
-tabelaModule = pd.DataFrame(tabelaModule)
-tabelaModule = tabelaModule.sort_values(by="totalModuleViews", ascending=False)
 sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
 
 end_date = datetime.today().astimezone(tz=sao_paulo_tz)
@@ -74,9 +39,9 @@ raw_dateViews = conn.query(f'''
                    ''')
 
 raw_views = raw_dateViews.sort_values(by="createdAt", ascending=True)
-views = []
+new_views = []
 for row in raw_views.itertuples():
-    views.append({
+    new_views.append({
         "contentId": row.contentId,
         "contentTitle": row.contentTitle,
         "watchUntil": row.watchUntil,
@@ -84,8 +49,8 @@ for row in raw_views.itertuples():
         "createdAt": row.createdAt.replace(minute=0, second=0, microsecond=0)
     })
 
-views = pd.DataFrame(views)
-hourViews = views.groupby(["contentTitle","createdAt"], as_index=False).agg({"totalViews": "sum"})
+new_views = pd.DataFrame(new_views)
+hourViews = new_views.groupby(["contentTitle","createdAt"], as_index=False).agg({"totalViews": "sum"})
 hourViews = pd.DataFrame(hourViews)
 
 
@@ -94,11 +59,11 @@ rankingViews = hourViews.drop("createdAt", axis=1)
 rankingViews = rankingViews.groupby(["contentTitle"], as_index=False).agg({"totalViews": "sum"})
 
 
-dateViews = views.groupby(["createdAt"]).sum().reset_index()
+dateViews = new_views.groupby(["createdAt","contentTitle","contentId"], as_index=False).agg({"totalViews": "sum","watchUntil": "sum"})
 dateViews = pd.DataFrame(dateViews)
 
-views_without_date = views.drop("createdAt", axis=1)
-contentViews = views_without_date.groupby(["contentId"]).sum().reset_index()
+views_without_date = new_views.drop("createdAt", axis=1)
+contentViews = views_without_date.groupby(["contentId"], as_index=False).agg({"totalViews": "sum","watchUntil": "sum"})
 contentViews = pd.DataFrame(contentViews)
 
 mais_visto_data = contentViews.sort_values(by="totalViews", ascending=False).iloc[0]
@@ -119,7 +84,7 @@ mais_visto = conn.query(f'''
                    ;''')
 
 
-tabelaModuleHistory = dateViews.groupby("createdAt").sum().reset_index()
+tabelaModuleHistory = dateViews.groupby(["createdAt"], as_index=False).agg({"totalViews": "sum","watchUntil": "sum"})
 tabelaModuleHistory = pd.DataFrame(tabelaModuleHistory)
 
 
@@ -210,7 +175,7 @@ with col1:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
         "text": {"font-size": "12px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#00BD7A"},
         }
 )
     
@@ -224,7 +189,7 @@ with col2:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
         "text": {"font-size": "12px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"LawnGreen"},
         }
     )
 with col3:
@@ -237,7 +202,7 @@ with col3:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
         "text": {"font-size": "10px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"LawnGreen"},
         }
 )
     
@@ -250,6 +215,6 @@ with col4:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
         "text": {"font-size": "16px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"LawnGreen"},
         }
 )

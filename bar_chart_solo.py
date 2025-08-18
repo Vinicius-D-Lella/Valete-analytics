@@ -6,7 +6,6 @@ from home import tabelaModule
 
 st.markdown("""
     <style>
-        /* Centraliza todo o conteúdo */
         .block-container {
             display: flex;
             flex-direction: column;
