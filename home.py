@@ -87,7 +87,6 @@ mais_visto = conn.query(f'''
 tabelaModuleHistory = dateViews.groupby(["createdAt"], as_index=False).agg({"totalViews": "sum","watchUntil": "sum"})
 tabelaModuleHistory = pd.DataFrame(tabelaModuleHistory)
 
-
 record = tabelaModuleHistory.sort_values(by="totalViews", ascending=False).iloc[0]
 engajamento = 0
 
@@ -97,7 +96,6 @@ engajamento = engajamento / len(raw_views) if len(raw_views) > 0 else 0
 engajamento = int(engajamento * 100)
 
 Tabela = tabelaModuleHistory.rename(columns={"totalViews": "Views","createdAt": "Data"})
-
 chart = (
     alt.Chart(Tabela)
     .mark_area(
@@ -175,7 +173,7 @@ with col1:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
         "text": {"font-size": "12px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#00BD7A"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )
     
@@ -189,7 +187,7 @@ with col2:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
         "text": {"font-size": "12px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"LawnGreen"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
     )
 with col3:
@@ -202,7 +200,7 @@ with col3:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
         "text": {"font-size": "10px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"LawnGreen"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )
     
@@ -215,6 +213,6 @@ with col4:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
         "text": {"font-size": "16px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"LawnGreen"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )

@@ -2,7 +2,9 @@ import altair as alt
 import streamlit as st
 import pandas as pd
 from datetime import date, datetime
-from home import tabelaModule
+from ranking import tabelaModule
+conn = st.connection("sql")
+
 
 st.markdown("""
     <style>
@@ -24,13 +26,13 @@ conn = st.connection("sql")
 freeContent = conn.query('SELECT "moduleId","contentId" FROM public."OfferAccess" WHERE "offerId" = 3;')
 subscriptions = conn.query('SELECT "userId" FROM public."Subscription";')
 with select_module:
-    opcao = st.selectbox("Selecione o módulo", options=tabelaModule.title.values, key="selectModule", index=0)
-modulo = tabelaModule[tabelaModule["title"] == opcao].iloc[0]
+    opcao = st.selectbox("Selecione o módulo", options=tabelaModule.moduleName.values, key="selectModule", index=0)
+modulo = tabelaModule[tabelaModule["moduleName"] == opcao].iloc[0]
 
 
 
 
-conteudos = conn.query(f'SELECT "id" FROM public."Content" WHERE "moduleId" = {modulo.id};')
+conteudos = conn.query(f'SELECT "id" FROM public."Content" WHERE "moduleId" = {modulo.moduleId};')
 
 frcView = 0
 pacView = 0
@@ -94,7 +96,7 @@ if st.session_state.uniqueUser:
     usuario_vendo_conteudo_gratis = []
     usuario_vendo_conteudo_pago = []
     for row in raw_views.itertuples():
-        if modulo.id in freeContent.moduleId.values:
+        if modulo.moduleId in freeContent.moduleId.values:
             usuario_vendo_conteudo_gratis.append({"userId": row.userId})
         else:
             if row.contentId in freeContent.contentId.values:
@@ -129,7 +131,7 @@ if st.session_state.uniqueUser:
             if row.userId in subscriptions.userId.values:
                 spaView += 1
 else:
-    if modulo.id in freeContent.moduleId.values:
+    if modulo.moduleId in freeContent.moduleId.values:
         frcView = contentViews.totalViews.sum()
     else:
         for row in contentViews.itertuples():
@@ -139,7 +141,7 @@ else:
                 pacView += row.totalViews
 
     for row in raw_views.itertuples():
-        if modulo.id in freeContent.moduleId.values:
+        if modulo.moduleId in freeContent.moduleId.values:
             if row.userId not in subscriptions.userId.values:
                 ufrView += row.totalViews
             else:
@@ -163,29 +165,29 @@ modulo = modulo.assign(
 dadosConteudo = []
 dadosViewer = []
 dadosConteudo.append({
-            "Módulo":modulo.title.values[0],
+            "Módulo":modulo.moduleName.values[0],
             "Views":modulo.frcView.values[0],
             "Conteúdo":"Gratuito"
         })
 
 dadosConteudo.append({
-            "Módulo":modulo.title.values[0],
+            "Módulo":modulo.moduleName.values[0],
             "Views":modulo.pacView.values[0],
             "Conteúdo":"Pago"
         })
 
 dadosViewer.append({
-            "Módulo":modulo.title.values[0],
+            "Módulo":modulo.moduleName.values[0],
             "Views":modulo.ufrView.values[0],
             "Tipo de Visualização":"Unsub view gratuita"
         })
 dadosViewer.append({
-            "Módulo":modulo.title.values[0],
+            "Módulo":modulo.moduleName.values[0],
             "Views":modulo.sfrView.values[0],
             "Tipo de Visualização":"Sub view gratuita"
         })
 dadosViewer.append({
-            "Módulo":modulo.title.values[0],
+            "Módulo":modulo.moduleName.values[0],
             "Views":modulo.spaView.values[0],
             "Tipo de Visualização":"Sub view paga"
         })

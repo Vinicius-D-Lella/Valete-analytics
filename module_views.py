@@ -1,9 +1,14 @@
 import altair as alt
 import streamlit as st
 import pandas as pd
-from home import tabelaModule
 from datetime import date, datetime
 from streamlit_product_card import product_card
+from ranking import tabelaModule
+
+tabelaModule = tabelaModule.rename(columns={"moduleName": "title", "moduleId": "id"})
+
+conn = st.connection("sql")
+
 
 st.markdown("""
     <style>
@@ -17,7 +22,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 if "Total" not in tabelaModule.title.values:
-    tabelaModule.loc[len(tabelaModule)] = [1000000000,"Total",1]
+    tabelaModule.loc[len(tabelaModule)] = ["Total",1000000000,tabelaModule.totalModuleViews.values[1] - 1]
+    tabelaModule = tabelaModule.sort_values(by="totalModuleViews", ascending=False)
 conn = st.connection("sql")
 st.title("Análise de Módulo")
 select_module, select_date = st.columns(2)
@@ -83,7 +89,7 @@ if modulo == "Total":
                     "watchUntil",
                     "Content"."title" AS "contentTitle",
                     CASE WHEN "totalViews" > 10 THEN 10 ELSE "totalViews" END AS "totalViews",
-                   CAST("createdAt" AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' AS DATE) AS "createdAt"
+                   CAST("ContentView"."createdAt" AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' AS DATE) AS "createdAt"
                    FROM public."ContentView"
                    INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
                    WHERE "totalViews" > 0
@@ -174,7 +180,7 @@ with col1:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%"},
         "text": {"font-size": "12px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )
     
@@ -188,7 +194,7 @@ with col2:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%"},
         "text": {"font-size": "12px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )
     
@@ -201,7 +207,7 @@ with col3:
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%"},
         "text": {"font-size": "16px", "font-weight": "bold", "text-align": "center"},
-        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center"},
+        "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )
     

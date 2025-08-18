@@ -1,16 +1,17 @@
 import streamlit as st
-import pandas as pd 
-from home import tabelaModule 
 
 conn = st.connection("sql")
-
-
-
+tabelaModule = conn.query("""SELECT
+                            "id",
+                            "name" as "title" 
+                            FROM public."Module"
+                          ;""")
 conteudos = conn.query('''
                        SELECT
                            "Content"."id",
                            "Content"."title",
-                           "Module"."name",
+                           "Module"."name" as "moduleName",
+                           "Content"."moduleId",
                             SUM(CASE WHEN "ContentView"."totalViews" > 10 THEN 10 ELSE "ContentView"."totalViews" END) AS "totalViews"
                        FROM public."Content"
                        LEFT JOIN public."ContentView" ON "Content"."id" = "ContentView"."contentId"
@@ -19,6 +20,9 @@ conteudos = conn.query('''
                        GROUP BY "Content"."id", "Module"."name"
                        ORDER BY "totalViews" DESC
                        ''')
+
+tabelaModule = conteudos.groupby(["moduleName","moduleId"], as_index=False).agg({"totalViews": "sum"})
+tabelaModule = tabelaModule.rename(columns={"totalViews": "totalModuleViews"})
 
 st.title("Ranking de Conteúdos")
 st.dataframe(conteudos, column_config={
