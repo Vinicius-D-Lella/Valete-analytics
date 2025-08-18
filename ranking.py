@@ -26,9 +26,10 @@ tabelaModule = tabelaModule.rename(columns={"totalViews": "totalModuleViews"})
 
 st.title("Ranking de Conteúdos")
 st.dataframe(conteudos, column_config={
-    "id": None,
+    "id":None,
+    "moduleId": None,
     "title": "Título do Conteúdo",
-    "name": "Nome do Módulo",
+    "moduleName": "Nome do Módulo",
     "totalViews": "Total de Views",
 },
     hide_index=True,
@@ -37,8 +38,8 @@ st.dataframe(conteudos, column_config={
 st.title("Ranking de Módulos")
 tabelaModule = tabelaModule.sort_values(by="totalModuleViews", ascending=False)
 st.dataframe(tabelaModule, column_config={
-    "id": None,
-    "title": "Nome do Modulo",
+    "moduleId": None,
+    "moduleName": "Nome do Modulo",
     "totalModuleViews": "Total de Views",
 
 },
