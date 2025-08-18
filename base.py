@@ -14,11 +14,11 @@ pages = {
         #st.Page("bar_chart.py", title="Comparação entre views de graça ou pagas"),
     ]
 }
-st.sidebar.button("Log out", on_click=st.logout)
 
 if st.user.is_logged_in:
     if st.user.email in st.secrets["whitelist"]:
         pg = st.navigation(pages)
+        st.sidebar.button("Log out", on_click=st.logout)
         pg.run()
     else:
         st.write("Você não tem permissão para acessar esta página.")
