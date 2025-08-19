@@ -202,7 +202,7 @@ datas_conteudos = []
 
 if today_content_list.empty == False:
     for index, row in today_content_list.iterrows():
-        if not row["publicado"] > datetime.now():
+        if not row["publicado"].tz_localize(tz=sao_paulo_tz) > datetime.now().astimezone(tz=sao_paulo_tz):
             datas_conteudos.append({
                 "data": row["publicado"],
                 "titulo": row["titulo"]
