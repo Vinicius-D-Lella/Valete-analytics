@@ -1,7 +1,7 @@
 import altair as alt
 import streamlit as st
 import pandas as pd
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from streamlit_product_card import product_card
 import pytz
 from streamlit_extras.stylable_container import stylable_container 
@@ -66,10 +66,12 @@ with stylable_container(
 ):
     data_selecionada = st.selectbox("", options=dates)
 
-if data_selecionada:
-    data_selecionada = data_selecionada.replace("/", "-")
-    start_date = datetime.combine(datetime.strptime(data_selecionada, "%d-%m-%y"), time.min).astimezone(tz=sao_paulo_tz)
-    end_date = datetime.combine(datetime.strptime(data_selecionada, "%d-%m-%y"), time.max).astimezone(tz=sao_paulo_tz)
+
+data_selecionada = data_selecionada.replace("/", "-")
+data_selecionada = datetime.strptime(data_selecionada, "%d-%m-%y")
+data_selecionada = data_selecionada.date()
+start_date = datetime.combine(data_selecionada, time.min)
+end_date = datetime.combine(data_selecionada, time.max)
 
 raw_dateViews = conn.query(f'''
                    SELECT 
@@ -77,22 +79,23 @@ raw_dateViews = conn.query(f'''
                     "Content"."title" AS "contentTitle",
                     "watchUntil",
                     "totalViews",
-                    "ContentView"."createdAt"
+                   "ContentView"."createdAt"
                    FROM public."ContentView"
                    INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
                    WHERE "totalViews" > 0
-                   AND "ContentView"."createdAt" BETWEEN '{start_date}' AND '{end_date}'
+                   AND "ContentView"."createdAt" BETWEEN '{start_date + timedelta(hours=3)}' AND '{end_date + timedelta(hours=3)}'
                    ''')
 
 raw_views = raw_dateViews.sort_values(by="createdAt", ascending=True)
 new_views = []
 for row in raw_views.itertuples():
+    hour = row.createdAt - timedelta(hours=3)
     new_views.append({
         "contentId": row.contentId,
         "contentTitle": row.contentTitle,
         "watchUntil": row.watchUntil,
         "totalViews": row.totalViews,
-        "createdAt": row.createdAt.replace(minute=0, second=0, microsecond=0)
+        "createdAt": hour.replace(minute=0, second=0, microsecond=0)
     })
 
 new_views = pd.DataFrame(new_views)
