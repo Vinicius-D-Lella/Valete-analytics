@@ -209,17 +209,24 @@ if today_content_list.empty == False:
         })
 df_marcadores = pd.DataFrame(datas_conteudos)
 
-linhas = alt.Chart(df_marcadores).mark_rule(size=2, color="white").encode(
+linhaviziveis = alt.Chart(df_marcadores).mark_rule(size=2, color="white").encode(
     x="data:T",
     tooltip=[
         alt.Tooltip("data:T", title="Horário", format="%d/%m %H:%M"),
         alt.Tooltip("titulo:N", title="Titulo")
     ]
-
    )
 
+linhas_fundo = alt.Chart(df_marcadores).mark_rule(size=20,color="transparent", opacity=1).encode(
+    x="data:T",
+    tooltip=[
+        alt.Tooltip("data:T", title="Horário", format="%d/%m %H:%M"),
+        alt.Tooltip("titulo:N", title="Titulo")
+    ]
+)
 
-ok_chart = chart + linhas
+
+ok_chart = chart + linhas_fundo + linhaviziveis
 
 st.altair_chart(ok_chart, use_container_width=True)
 
