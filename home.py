@@ -1,9 +1,10 @@
 import altair as alt
 import streamlit as st
 import pandas as pd
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time
 from streamlit_product_card import product_card
 import pytz
+from streamlit_extras.stylable_container import stylable_container 
 
 
 st.markdown("""
@@ -19,11 +20,56 @@ st.markdown("""
 
 conn = st.connection("sql")
 st.title("Resumo do Dia")
-st.subheader(date.today().strftime("%d/%m"))
+
+
 sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
 
 end_date = datetime.today().astimezone(tz=sao_paulo_tz)
 start_date = datetime.combine(date.today(), time.min).astimezone(tz=sao_paulo_tz)
+
+first_day = date(2025,5,12)
+last_day = date.today()
+
+dates = pd.date_range(start=first_day, end=last_day).date
+dates = pd.DataFrame(dates, columns=["createdAt"])
+dates = dates.sort_values(by="createdAt", ascending=False)
+dates = pd.to_datetime(dates["createdAt"], format="%Y-%m-%d").dt.strftime("%d/%m/%y").tolist()
+dates = pd.DataFrame(dates, columns=["createdAt"])
+with stylable_container(
+    key="date_selector",
+    css_styles="""
+    div[data-testid="stElementContainer"]{
+        background-color: transparent;
+        display: flex;
+        justify-content: center;
+    }
+    .stSelectbox {
+        width: min-content;
+        display: flex;
+        flex-direction: column;
+    }
+    .stSelectbox > div > div{
+            background-color: transparent;
+            border:0;
+            color: white;
+            font-size: 30px;
+            height: min-content;
+            font-weight: 500;
+        }
+    .stSelectbox > label{
+    width: min-content;
+    height: min-content;
+    min-height:0;
+    margin: 0;
+    }
+    """
+):
+    data_selecionada = st.selectbox("", options=dates)
+
+if data_selecionada:
+    data_selecionada = data_selecionada.replace("/", "-")
+    start_date = datetime.combine(datetime.strptime(data_selecionada, "%d-%m-%y"), time.min).astimezone(tz=sao_paulo_tz)
+    end_date = datetime.combine(datetime.strptime(data_selecionada, "%d-%m-%y"), time.max).astimezone(tz=sao_paulo_tz)
 
 raw_dateViews = conn.query(f'''
                    SELECT 
@@ -216,3 +262,5 @@ with col4:
         "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )
+
+

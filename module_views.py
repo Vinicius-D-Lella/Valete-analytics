@@ -1,14 +1,13 @@
 import altair as alt
 import streamlit as st
 import pandas as pd
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from streamlit_product_card import product_card
 from ranking import tabelaModule
 
 tabelaModule = tabelaModule.rename(columns={"moduleName": "title", "moduleId": "id"})
 
 conn = st.connection("sql")
-
 
 st.markdown("""
     <style>
@@ -79,8 +78,9 @@ raw_dateViews = conn.query(f'''
                    INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
                    WHERE "contentId" IN ({','.join(map(str, conteudos.id.values))})
                    AND "totalViews" > 0
-                   AND "ContentView"."createdAt" BETWEEN '{start_date}' AND '{end_date}'
+                   AND "ContentView"."createdAt" BETWEEN '{start_date} 03:00:00' AND '{end_date + timedelta(days=1)} 03:00:00'
                    ''')
+
 
 if modulo == "Total":
     full_raw_dateViews = conn.query(f'''
@@ -93,11 +93,12 @@ if modulo == "Total":
                    FROM public."ContentView"
                    INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
                    WHERE "totalViews" > 0
-                   AND "ContentView"."createdAt" BETWEEN '{start_date}' AND '{end_date}'
+                   AND "ContentView"."createdAt" BETWEEN '{start_date} 03:00:00' AND '{end_date + timedelta(days=1)} 03:00:00'
                    ''')
     raw_views = full_raw_dateViews.sort_values(by="createdAt", ascending=True)
 else:
     raw_views = raw_dateViews.sort_values(by="createdAt", ascending=True)
+
 
 contentViews = raw_views.groupby(["contentId","createdAt","contentTitle"], as_index=False).agg({"totalViews": "sum","watchUntil": "sum"})
 contentViews = pd.DataFrame(contentViews)
