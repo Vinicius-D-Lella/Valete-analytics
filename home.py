@@ -30,6 +30,7 @@ start_date = datetime.combine(date.today(), time.min).astimezone(tz=sao_paulo_tz
 first_day = date(2025,5,12)
 last_day = date.today()
 
+
 dates = pd.date_range(start=first_day, end=last_day).date
 dates = pd.DataFrame(dates, columns=["createdAt"])
 dates = dates.sort_values(by="createdAt", ascending=False)
@@ -85,7 +86,25 @@ raw_dateViews = conn.query(f'''
                    WHERE "totalViews" > 0
                    AND "ContentView"."createdAt" BETWEEN '{start_date + timedelta(hours=3)}' AND '{end_date + timedelta(hours=3)}'
                    ''')
+today_content = conn.query(f'''
+                            SELECT 
+                                "title",
+                                "publishedAt"
+                            FROM public."Content"
+                            WHERE "publishedAt" BETWEEN '{start_date + timedelta(hours=3)}' AND '{end_date + timedelta(hours=3)}'
+                            AND "Content"."status" = 'PUBLISHED'
+                           ''')
 
+today_content_list = []
+
+for row in today_content.itertuples():
+    today_content_list.append({
+        "titulo": row.title,
+        "publicado": row.publishedAt - timedelta(hours=3)
+    })
+today_content_list = pd.DataFrame(today_content_list)
+if not today_content_list.empty:
+    today_content_list = today_content_list.sort_values(by="publicado", ascending=True)
 raw_views = raw_dateViews.sort_values(by="createdAt", ascending=True)
 new_views = []
 for row in raw_views.itertuples():
@@ -102,7 +121,6 @@ new_views = pd.DataFrame(new_views)
 hourViews = new_views.groupby(["contentTitle","createdAt"], as_index=False).agg({"totalViews": "sum"})
 hourViews = pd.DataFrame(hourViews)
 
-
 rankingViews = hourViews.drop("createdAt", axis=1)
 
 rankingViews = rankingViews.groupby(["contentTitle"], as_index=False).agg({"totalViews": "sum"})
@@ -114,6 +132,21 @@ dateViews = pd.DataFrame(dateViews)
 views_without_date = new_views.drop("createdAt", axis=1)
 contentViews = views_without_date.groupby(["contentId"], as_index=False).agg({"totalViews": "sum","watchUntil": "sum"})
 contentViews = pd.DataFrame(contentViews)
+
+
+horarios = []
+top_views_list = []
+for row in dateViews.itertuples():
+    if row.createdAt not in horarios:
+        horarios.append(row.createdAt)
+
+for row in horarios:
+    views_hora = hourViews[hourViews["createdAt"] == row]
+    views_hora = views_hora.sort_values(by="totalViews", ascending=False)
+    mais_visto_da_data = views_hora.iloc[0]
+    top_views_list.append(mais_visto_da_data)
+
+top_views_list = pd.DataFrame(top_views_list)
 
 mais_visto_data = contentViews.sort_values(by="totalViews", ascending=False).iloc[0]
 
@@ -147,11 +180,11 @@ engajamento = int(engajamento * 100)
 Tabela = tabelaModuleHistory.rename(columns={"totalViews": "Views","createdAt": "Data"})
 chart = (
     alt.Chart(Tabela)
-    .mark_area(
+    .mark_area(       
         color="steelblue",         
-        opacity=0.5,              
-        line={"color": "steelblue"},    
-        point={"size": 0}     
+        opacity=0.40,              
+        line={"color": "steelblue","opacity": 0.70},    
+        point={"size": 0} 
     )
     .encode(
         x=alt.X("Data:T", title="Data", axis=alt.Axis(format="%H:%M")),
@@ -165,7 +198,30 @@ chart = (
 )
 
 
-st.altair_chart(chart, use_container_width=True)
+datas_conteudos = []
+
+if today_content_list.empty == False:
+    for index, row in today_content_list.iterrows():
+        if not row["publicado"] > datetime.now():
+            datas_conteudos.append({
+                "data": row["publicado"],
+                "titulo": row["titulo"]
+        })
+df_marcadores = pd.DataFrame(datas_conteudos)
+
+linhas = alt.Chart(df_marcadores).mark_rule(size=2, color="white").encode(
+    x="data:T",
+    tooltip=[
+        alt.Tooltip("data:T", title="Horário", format="%d/%m %H:%M"),
+        alt.Tooltip("titulo:N", title="Titulo")
+    ]
+
+   )
+
+
+ok_chart = chart + linhas
+
+st.altair_chart(ok_chart, use_container_width=True)
 
 total_views = Tabela["Views"].sum()
 quantidade_horas = Tabela["Data"].nunique()
@@ -201,7 +257,7 @@ def ranking_de_views_pico():
 @st.dialog(f"Horarios mais vistos")
 def ranking_de_views_mais_visto():
     st.dataframe(
-            hourViews[hourViews["contentTitle"] == mais_visto["contentTitle"][0]].sort_values(by="totalViews", ascending=False),
+            top_views_list,
             column_config={
             "contentTitle": "Título do Conteúdo",
             "createdAt": "Horário",
@@ -241,7 +297,7 @@ with col2:
     )
 with col3:
     product_card(
-    product_name = "Mais visto",
+    product_name = "Mais visto do dia",
     description = mais_visto["contentTitle"][0],
     price = int(mais_visto_data["totalViews"]),
     on_button_click=ranking_de_views_mais_visto,
@@ -265,5 +321,4 @@ with col4:
         "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )
-
 

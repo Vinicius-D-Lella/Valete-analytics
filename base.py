@@ -18,6 +18,7 @@ pages = {
 if st.user.is_logged_in:
     if st.user.email in st.secrets["whitelist"]:
         pg = st.navigation(pages)
+        st.sidebar.write(f"Em caso de Bug entre em contato com o suporte.")
         st.sidebar.button("Log out", on_click=st.logout)
         pg.run()
     else:
