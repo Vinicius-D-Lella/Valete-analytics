@@ -1,10 +1,9 @@
 import altair as alt
 import streamlit as st
 import pandas as pd
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from streamlit_product_card import product_card
 from ranking import tabelaModule
-from streamlit_extras.stylable_container import stylable_container 
 
 tabelaModule = tabelaModule.rename(columns={"moduleName": "title", "moduleId": "id"})
 
@@ -85,6 +84,7 @@ raw_dateViews = conn.query(f'''
                     INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
                     INNER JOIN public."Module" ON "Module"."id" = "Content"."moduleId"
                     WHERE "contentId" IN ({','.join(map(str, conteudos.id.values))})
+                    AND "Content"."status" = 'PUBLISHED'
                     AND "totalViews" > 0
                     AND "ContentView"."createdAt" BETWEEN '{start_date} 03:00:00' AND '{end_date + timedelta(days=1)} 03:00:00'
                     ''')
@@ -104,6 +104,7 @@ if modulo == "Total":
                     INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
                     INNER JOIN public."Module" ON "Module"."id" = "Content"."moduleId"
                     WHERE "totalViews" > 0
+                    AND "Content"."status" = 'PUBLISHED'
                     AND "ContentView"."createdAt" BETWEEN '{start_date} 03:00:00' AND '{end_date + timedelta(days=1)} 03:00:00'
                     ''')
     raw_views = full_raw_dateViews.sort_values(by="createdAt", ascending=True)
@@ -120,6 +121,9 @@ contentRaking = contentRaking.sort_values(by="totalViews", ascending=False)
 mais_visto = contentRaking.iloc[0]
 
 conteudos_do_modulo = conteudos_do_modulo.sort_values(by="publishedAt", ascending=False)
+for row in conteudos_do_modulo.itertuples():
+    if row.publishedAt - timedelta(hours=3) > datetime.combine(date.today(), time.min):
+        conteudos_do_modulo.drop(index=row.Index, inplace=True)
 
 if active_content:
     with select_content:
@@ -137,12 +141,12 @@ if active_content:
                                     INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
                                     INNER JOIN public."Module" ON "Module"."id" = "Content"."moduleId"
                                     WHERE "Content"."title" = '{conteudo_selected}'
+                                    AND "Content"."status" = 'PUBLISHED'
                                     AND "ContentView"."createdAt" BETWEEN '{start_date} 03:00:00' AND '{end_date + timedelta(days=1)} 03:00:00'
                                     ''')
         tabelaModuleHistory = content_views.groupby(["createdAt"], as_index=False).agg({"totalViews": "sum"})
 else:
     with select_content:
-        st.write("")
         tabelaModuleHistory = contentViews.groupby(["createdAt"], as_index=False).agg({"totalViews": "sum"})
 
 tabelaModuleHistory = pd.DataFrame(tabelaModuleHistory)

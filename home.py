@@ -83,7 +83,7 @@ raw_dateViews = conn.query(f'''
                    INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
                    INNER JOIN public."Module" ON "Module"."id" = "Content"."moduleId"
                    WHERE "totalViews" > 0
-                   AND "ContentView"."createdAt" BETWEEN '{start_date + timedelta(hours=3)}' AND '{end_date + timedelta(hours=3)}'
+                   AND "ContentView"."createdAt" BETWEEN '{start_date + timedelta(hours=2)}' AND '{end_date + timedelta(hours=3)}'
                    ''')
 today_content = conn.query(f'''
                             SELECT 
@@ -178,18 +178,19 @@ engajamento = engajamento / len(raw_views) if len(raw_views) > 0 else 0
 engajamento = int(engajamento * 100)
 
 Tabela = tabelaModuleHistory.rename(columns={"totalViews": "Views","createdAt": "Data"})
+Tabela["Horário"] = Tabela["Data"] + timedelta(hours=1)
 chart = (
     alt.Chart(Tabela)
     .mark_area(       
         color="steelblue",         
         opacity=0.40,              
         line={"color": "steelblue","opacity": 0.70},    
-        point={"size": 0} 
+        point={"size": 10} 
     )
     .encode(
-        x=alt.X("Data:T", title="Data", axis=alt.Axis(format="%H:%M")),
+        x=alt.X("Horário:T", title="Horário", axis=alt.Axis(format="%H:%M")),
         y=alt.Y("Views:Q", title="Visualizações"),
-        tooltip=[alt.Tooltip("Data:T", format="%H:%M"), "Views"]
+        tooltip=[alt.Tooltip("Horário:T", format="%H:%M"), "Views"]
     )
     .properties(
         width=700,
@@ -261,7 +262,7 @@ def ranking_de_views_dia():
             hide_index=True,
             )
 
-@st.dialog(f"Views as {record["createdAt"].strftime("%H")} horas")
+@st.dialog(f"Views as {(record["createdAt"] + timedelta(hours=1)).strftime("%H")} horas")
 def ranking_de_views_pico():
     st.markdown(
         """
@@ -285,7 +286,7 @@ def ranking_de_views_pico():
             hide_index=True,
             )
     
-@st.dialog(f"Horarios mais vistos")
+@st.dialog(f"Horários mais vistos")
 def ranking_de_views_mais_visto():
     st.markdown(
         """
@@ -328,7 +329,7 @@ with col1:
 with col2:
     product_card(
     product_name="Pico de Views",
-    description=record["createdAt"].strftime("%H") + "h",
+    description=(record["createdAt"] + timedelta(hours=1)).strftime("%H") + "h",
     price=record["totalViews"],
     on_button_click=ranking_de_views_pico,
     styles={
