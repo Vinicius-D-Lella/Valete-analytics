@@ -7,6 +7,7 @@ import pytz
 from streamlit_extras.stylable_container import stylable_container 
 
 
+# Estilizando o container principal
 st.markdown("""
     <style>
         .block-container {
@@ -18,24 +19,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-conn = st.connection("sql")
 st.title("Resumo do Dia")
 
-
 sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
-
 end_date = datetime.today().astimezone(tz=sao_paulo_tz)
 start_date = datetime.combine(date.today(), time.min).astimezone(tz=sao_paulo_tz)
-
 first_day = date(2025,5,12)
 last_day = date.today()
-
-
 dates = pd.date_range(start=first_day, end=last_day).date
 dates = pd.DataFrame(dates, columns=["createdAt"])
 dates = dates.sort_values(by="createdAt", ascending=False)
 dates = pd.to_datetime(dates["createdAt"], format="%Y-%m-%d").dt.strftime("%d/%m/%y").tolist()
 dates = pd.DataFrame(dates, columns=["createdAt"])
+
 with stylable_container(
     key="date_selector",
     css_styles="""
@@ -74,15 +70,18 @@ data_selecionada = data_selecionada.date()
 start_date = datetime.combine(data_selecionada, time.min)
 end_date = datetime.combine(data_selecionada, time.max)
 
+conn = st.connection("sql")
 raw_dateViews = conn.query(f'''
                    SELECT 
                    "contentId",
                     "Content"."title" AS "contentTitle",
                     "watchUntil",
                     "totalViews",
+                    "Module"."name" AS "moduleName",
                    "ContentView"."createdAt"
                    FROM public."ContentView"
                    INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
+                   INNER JOIN public."Module" ON "Module"."id" = "Content"."moduleId"
                    WHERE "totalViews" > 0
                    AND "ContentView"."createdAt" BETWEEN '{start_date + timedelta(hours=3)}' AND '{end_date + timedelta(hours=3)}'
                    ''')
@@ -112,18 +111,19 @@ for row in raw_views.itertuples():
     new_views.append({
         "contentId": row.contentId,
         "contentTitle": row.contentTitle,
+        "moduleName": row.moduleName,
         "watchUntil": row.watchUntil,
         "totalViews": row.totalViews,
         "createdAt": hour.replace(minute=0, second=0, microsecond=0)
     })
 
 new_views = pd.DataFrame(new_views)
-hourViews = new_views.groupby(["contentTitle","createdAt"], as_index=False).agg({"totalViews": "sum"})
+hourViews = new_views.groupby(["contentTitle","createdAt","moduleName"], as_index=False).agg({"totalViews": "sum"})
 hourViews = pd.DataFrame(hourViews)
 
 rankingViews = hourViews.drop("createdAt", axis=1)
 
-rankingViews = rankingViews.groupby(["contentTitle"], as_index=False).agg({"totalViews": "sum"})
+rankingViews = rankingViews.groupby(["contentTitle","moduleName"], as_index=False).agg({"totalViews": "sum"})
 
 
 dateViews = new_views.groupby(["createdAt","contentTitle","contentId"], as_index=False).agg({"totalViews": "sum","watchUntil": "sum"})
@@ -239,38 +239,74 @@ col1,col2,col3= st.columns(3)
 col4 = st.container()
 @st.dialog(f"Mais vistos do dia")
 def ranking_de_views_dia():
+    st.markdown(
+        """
+        <style>
+        /* Aumenta a largura do modal */
+        [data-testid="stDialog"] > div > div{
+            width: 80%;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
     st.dataframe(
             rankingViews.sort_values(by="totalViews", ascending=False),
             column_config={
             "contentTitle": "Título do Conteúdo",
             "createdAt": None,
             "totalViews": "Views",
+            "moduleName": "Módulo",
             },
             hide_index=True,
             )
 
 @st.dialog(f"Views as {record["createdAt"].strftime("%H")} horas")
 def ranking_de_views_pico():
+    st.markdown(
+        """
+        <style>
+        /* Aumenta a largura do modal */
+        [data-testid="stDialog"] > div > div{
+            width: 80%;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
     st.dataframe(
             hourViews[hourViews["createdAt"] == record["createdAt"]].sort_values(by="totalViews", ascending=False),
             column_config={
             "contentTitle": "Título do Conteúdo",
             "createdAt": None,
             "totalViews": f"Views as {record['createdAt'].strftime('%H')} horas",
+            "moduleName": "Módulo",
             },
             hide_index=True,
             )
     
 @st.dialog(f"Horarios mais vistos")
 def ranking_de_views_mais_visto():
+    st.markdown(
+        """
+        <style>
+        /* Aumenta a largura do modal */
+        [data-testid="stDialog"] > div > div{
+            width: 80%;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
     st.dataframe(
             top_views_list,
             column_config={
             "contentTitle": "Título do Conteúdo",
             "createdAt": "Horário",
             "totalViews": "Views",
+            "moduleName": "Módulo",
             },
-            hide_index=True,
+            hide_index=True
             )
     
 

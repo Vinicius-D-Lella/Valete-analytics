@@ -9,7 +9,7 @@ if not st.user.is_logged_in:
 pages = {
     "Menu": [
         st.Page("home.py", title="Resumo do Dia"),
-        st.Page("module_views.py", title="Análise de Módulo"),
+        st.Page("analise-de-modulo-e-conteudo.py", title="Análise de Módulo e Conteúdo"),
         st.Page("bar_chart_solo.py", title="Análise de Público"),
         st.Page("ranking.py", title="Ranking"),
         #st.Page("bar_chart.py", title="Comparação entre views de graça ou pagas"),
