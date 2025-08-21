@@ -185,7 +185,7 @@ chart = (
         color="steelblue",         
         opacity=0.40,              
         line={"color": "steelblue","opacity": 0.70},    
-        point={"size": 10} 
+        point={"size": 0} 
     )
     .encode(
         x=alt.X("Horário:T", title="Horário", axis=alt.Axis(format="%H:%M")),
