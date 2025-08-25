@@ -231,8 +231,11 @@ ok_chart = chart + linhas_fundo + linhaviziveis
 
 st.altair_chart(ok_chart, use_container_width=True)
 
-total_views = Tabela["Views"].sum()
-quantidade_horas = Tabela["Data"].nunique()
+
+tabela_for_total = Tabela[Tabela["Data"].dt.date == date.today()]
+
+total_views = tabela_for_total["Views"].sum()
+quantidade_horas = tabela_for_total["Data"].nunique()
 
 st.subheader("Dados do Módulo de hoje")
 
@@ -310,6 +313,7 @@ def ranking_de_views_mais_visto():
             hide_index=True
             )
     
+
 
 
 with col1:
