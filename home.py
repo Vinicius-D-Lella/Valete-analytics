@@ -31,8 +31,10 @@ dates = pd.DataFrame(dates, columns=["createdAt"])
 dates = dates.sort_values(by="createdAt", ascending=False)
 dates = pd.to_datetime(dates["createdAt"], format="%Y-%m-%d").dt.strftime("%d/%m/%y").tolist()
 dates = pd.DataFrame(dates, columns=["createdAt"])
+blank1, blank2, dia, blank4, clear , = st.columns(5)
 
-with stylable_container(
+with dia:   
+    with stylable_container(
     key="date_selector",
     css_styles="""
     div[data-testid="stElementContainer"]{
@@ -60,8 +62,13 @@ with stylable_container(
     margin: 0;
     }
     """
-):
-    data_selecionada = st.selectbox("", options=dates)
+    ):
+        data_selecionada = st.selectbox("", options=dates)
+
+with clear:
+    if st.button("Atualizar"):
+        st.cache_data.clear()
+        st.cache_resource.clear()
 
 
 data_selecionada = data_selecionada.replace("/", "-")
