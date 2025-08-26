@@ -21,6 +21,7 @@ if st.user.is_logged_in:
         pg = st.navigation(pages)
         st.sidebar.write(f"Em caso de Bug entre em contato com o suporte.")
         st.sidebar.button("Log out", on_click=st.logout)
+        st.set_page_config(layout="wide")
         pg.run()
     else:
         st.write("Você não tem permissão para acessar esta página.")
