@@ -90,7 +90,7 @@ raw_dateViews = conn.query(f'''
                    INNER JOIN public."Content" ON "Content"."id" = "ContentView"."contentId"
                    INNER JOIN public."Module" ON "Module"."id" = "Content"."moduleId"
                    WHERE "totalViews" > 0
-                   AND "ContentView"."createdAt" BETWEEN '{start_date + timedelta(hours=2)}' AND '{end_date + timedelta(hours=3)}'
+                   AND "ContentView"."createdAt" BETWEEN '{start_date + timedelta(hours=3)}' AND '{end_date + timedelta(hours=3)}'
                    ''')
 today_content = conn.query(f'''
                             SELECT 
@@ -186,6 +186,7 @@ engajamento = int(engajamento * 100)
 
 Tabela = tabelaModuleHistory.rename(columns={"totalViews": "Views","createdAt": "Data"})
 Tabela["Horário"] = Tabela["Data"] + timedelta(hours=1)
+Tabela["label_data"] = Tabela["Data"].dt.strftime("%H:%M") + "-" + Tabela["Horário"].dt.strftime("%H:%M")
 chart = (
     alt.Chart(Tabela)
     .mark_area(       
@@ -197,7 +198,7 @@ chart = (
     .encode(
         x=alt.X("Horário:T", title="Horário", axis=alt.Axis(format="%H:%M")),
         y=alt.Y("Views:Q", title="Visualizações"),
-        tooltip=[alt.Tooltip("Horário:T", format="%H:%M"), "Views"]
+        tooltip=[alt.Tooltip("label_data", title="Horário"), "Views"]
     )
     .properties(
         width=700,
@@ -220,7 +221,7 @@ df_marcadores = pd.DataFrame(datas_conteudos)
 linhaviziveis = alt.Chart(df_marcadores).mark_rule(size=2, color="white").encode(
     x="data:T",
     tooltip=[
-        alt.Tooltip("data:T", title="Horário", format="%d/%m %H:%M"),
+        alt.Tooltip("data:T", title="Horário", format="%H:%M"),
         alt.Tooltip("titulo:N", title="Titulo")
     ]
    )
@@ -228,7 +229,7 @@ linhaviziveis = alt.Chart(df_marcadores).mark_rule(size=2, color="white").encode
 linhas_fundo = alt.Chart(df_marcadores).mark_rule(size=20,color="transparent", opacity=1).encode(
     x="data:T",
     tooltip=[
-        alt.Tooltip("data:T", title="Horário", format="%d/%m %H:%M"),
+        alt.Tooltip("data:T", title="Horário", format="%H:%M"),
         alt.Tooltip("titulo:N", title="Titulo")
     ]
 )

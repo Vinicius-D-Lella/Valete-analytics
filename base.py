@@ -13,7 +13,6 @@ pages = {
         st.Page("analise-de-modulo-e-conteudo.py", title="Análise de Módulo e Conteúdo"),
         st.Page("bar_chart_solo.py", title="Análise de Público"),
         st.Page("ranking.py", title="Ranking"),
-        #st.Page("bar_chart.py", title="Comparação entre views de graça ou pagas"),
     ]
 }
 if st.user.is_logged_in:
