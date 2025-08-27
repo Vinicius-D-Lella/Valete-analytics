@@ -29,9 +29,6 @@ with select_module:
     opcao = st.selectbox("Selecione o módulo", options=tabelaModule.moduleName.values, key="selectModule", index=0)
 modulo = tabelaModule[tabelaModule["moduleName"] == opcao].iloc[0]
 
-
-
-
 conteudos = conn.query(f'SELECT "id" FROM public."Content" WHERE "moduleId" = {modulo.moduleId};')
 
 frcView = 0
@@ -179,17 +176,17 @@ dadosConteudo.append({
 dadosViewer.append({
             "Módulo":modulo.moduleName.values[0],
             "Views":modulo.ufrView.values[0],
-            "Tipo de Visualização":"Unsub view gratuita"
+            "Tipo de Visualização":"User: Free - Content: Free"
         })
 dadosViewer.append({
             "Módulo":modulo.moduleName.values[0],
             "Views":modulo.sfrView.values[0],
-            "Tipo de Visualização":"Sub view gratuita"
+            "Tipo de Visualização":"User: Paid - Content: Free"
         })
 dadosViewer.append({
             "Módulo":modulo.moduleName.values[0],
             "Views":modulo.spaView.values[0],
-            "Tipo de Visualização":"Sub view paga"
+            "Tipo de Visualização":"User: Paid - Content: Paid"
         })
 
 
