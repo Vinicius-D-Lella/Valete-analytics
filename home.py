@@ -172,7 +172,6 @@ mais_visto = conn.query(f'''
                    GROUP BY "contentId","moduleId","contentTitle","moduleName"
                    ;''')
 
-
 tabelaModuleHistory = dateViews.groupby(["createdAt"], as_index=False).agg({"totalViews": "sum","watchUntil": "sum"})
 tabelaModuleHistory = pd.DataFrame(tabelaModuleHistory)
 
@@ -239,11 +238,8 @@ ok_chart = chart + linhas_fundo + linhaviziveis
 
 st.altair_chart(ok_chart, use_container_width=True)
 
-
-tabela_for_total = Tabela[Tabela["Data"].dt.date == date.today()]
-
-total_views = tabela_for_total["Views"].sum()
-quantidade_horas = tabela_for_total["Data"].nunique()
+total_views = Tabela["Views"].sum()
+quantidade_horas = Tabela["Data"].nunique()
 
 st.subheader("Dados do Módulo de hoje")
 
@@ -337,11 +333,13 @@ with col1:
         "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )
-    
+
+record_data = str(record["createdAt"].strftime("%H")) + "h - " + str((record["createdAt"] + timedelta(hours=1)).strftime("%H")) + "h"
+
 with col2:
     product_card(
     product_name="Pico de Views",
-    description=(record["createdAt"] + timedelta(hours=1)).strftime("%H") + "h",
+    description=record_data,
     price=record["totalViews"],
     on_button_click=ranking_de_views_pico,
     styles={
