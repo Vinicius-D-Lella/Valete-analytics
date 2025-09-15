@@ -74,6 +74,7 @@ raw_dateViews = conn.query(f'''
                     SELECT 
                     "contentId",
                         "watchUntil",
+                        "userId",
                         "Content"."title" AS "contentTitle",
                         "Module"."name" AS "moduleName",
                         "Module"."id" AS "moduleId",
@@ -94,6 +95,7 @@ if modulo == "Total":
                     SELECT 
                     "contentId",
                         "watchUntil",
+                        "userId",
                         "Content"."title" AS "contentTitle",
                         "Module"."name" AS "moduleName",
                         "Module"."id" AS "moduleId",
@@ -188,6 +190,7 @@ st.altair_chart(chart, use_container_width=True)
 
 total_views = Tabela["Views"].sum()
 quantidade_dias = Tabela["Data"].nunique()
+usuarios_unicos = raw_views["userId"].nunique()
 
 st.subheader(f"Dados {'' if modulo == 'Total' else 'do Módulo '} durante o período")
 
@@ -297,9 +300,9 @@ with col3:
 with col4:
     if not active_content:
         product_card(
-        product_name="Engajamento",
+        product_name="Usuarios Únicos no Período",
         description="",
-        price=str(engajamento) + "%",
+        price=str(usuarios_unicos),
         styles={
             "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
             "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%"},
