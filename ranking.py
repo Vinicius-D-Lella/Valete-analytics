@@ -1,11 +1,12 @@
 import streamlit as st
 from datetime import date, datetime
+import pandas as pd
 
 today = datetime.now()
 start_limit = date(2025,5,12)
 start_date = start_limit
 end_date = today
-end_limit = today
+end_limit = today + pd.DateOffset(days=1)
 
 
 st.title("Ranking de Conteúdos e Módulos")
