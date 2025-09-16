@@ -81,7 +81,6 @@ conn = st.connection("sql")
 raw_dateViews = conn.query(f'''
                    SELECT 
                    "contentId",
-                    "userId",
                     "Content"."title" AS "contentTitle",
                     "watchUntil",
                     "totalViews",
@@ -244,7 +243,7 @@ total_views = Tabela["Views"].sum()
 quantidade_horas = Tabela["Data"].nunique()
 
 st.subheader("Dados do Módulo de hoje")
-usuarios_unicos = raw_dateViews["userId"].nunique()
+
 
 col1,col2,col3= st.columns(3)
 col4 = st.container()
@@ -370,7 +369,7 @@ with col4:
     product_card(
     product_name="Usuarios unicos",
     description="",
-    price=str(usuarios_unicos),
+    price=str(3),
     styles={
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
