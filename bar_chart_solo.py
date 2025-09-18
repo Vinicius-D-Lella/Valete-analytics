@@ -5,7 +5,7 @@ from datetime import date, datetime
 from ranking import tabelaModule
 conn = st.connection("sql")
 
-
+tabelaModule = tabelaModule.rename(columns={"moduleName": "title"})
 st.markdown("""
     <style>
         .block-container {
@@ -17,6 +17,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+if "Total" not in tabelaModule.title.values:
+    tabelaModule.loc[len(tabelaModule)] = ["Total",1000000000,tabelaModule.totalModuleViews.values[1] - 1]
+    tabelaModule = tabelaModule.sort_values(by="totalModuleViews", ascending=False)
+
 st.title("Análise de público")
 select_module,select_date = st.columns(2)
 activeSpec,activeContent,false_bar,activeUniqueUser = st.columns(4)
@@ -26,16 +30,19 @@ conn = st.connection("sql")
 freeContent = conn.query('SELECT "moduleId","contentId" FROM public."OfferAccess" WHERE "offerId" = 3;')
 subscriptions = conn.query('SELECT "userId" FROM public."Subscription";')
 with select_module:
-    opcao = st.selectbox("Selecione o módulo", options=tabelaModule.moduleName.values, key="selectModule", index=0)
-modulo = tabelaModule[tabelaModule["moduleName"] == opcao].iloc[0]
-
-conteudos = conn.query(f'SELECT "id" FROM public."Content" WHERE "moduleId" = {modulo.moduleId};')
+    opcao = st.selectbox("Selecione o módulo", options=tabelaModule.title.values, key="selectModule", index=0)
+modulo = tabelaModule[tabelaModule["title"] == opcao].iloc[0]
 
 frcView = 0
 pacView = 0
 sfrView = 0
 spaView = 0
 ufrView = 0
+
+if modulo["title"] != "Total":
+    conteudos = conn.query(f'SELECT "id" FROM public."Content" WHERE "moduleId" = {modulo.moduleId};')
+else:
+    conteudos = conn.query(f'SELECT "id" FROM public."Content" WHERE "moduleId" = 14;')
 
 initialDate = conn.query(f'''
                    SELECT 
@@ -54,8 +61,8 @@ if initialDate.createdAt[0] < date(2025,5,12):
 else:
     start_limit = initialDate.createdAt[0]
 start_date = start_limit
-end_date = today
-end_limit = today
+end_date = today + pd.DateOffset(days=1)
+end_limit = today + pd.DateOffset(days=1)
 
 with select_date:
     d = st.date_input(
@@ -72,18 +79,31 @@ if len(d) == 2:
     end_date = d[1]
 
 raw_dateViews = conn.query(f'''
+                    SELECT 
+                    "contentId",
+                        "userId",
+                        CASE WHEN "totalViews" > 10 THEN 10 ELSE "totalViews" END AS "totalViews",
+                    CAST("createdAt" AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' AS DATE) AS "createdAt"
+                    FROM public."ContentView"
+                    WHERE "contentId" IN ({','.join(map(str, conteudos.id.values))})
+                    AND "totalViews" > 0
+                    AND "createdAt" BETWEEN '{start_date}' AND '{end_date}'
+                    ''')
+
+if modulo["title"] == "Total":
+    full_raw_dateViews = conn.query(f'''
                    SELECT 
                    "contentId",
                     "userId",
                     CASE WHEN "totalViews" > 10 THEN 10 ELSE "totalViews" END AS "totalViews",
                    CAST("createdAt" AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' AS DATE) AS "createdAt"
                    FROM public."ContentView"
-                   WHERE "contentId" IN ({','.join(map(str, conteudos.id.values))})
-                   AND "totalViews" > 0
+                   WHERE "totalViews" > 0
                    AND "createdAt" BETWEEN '{start_date}' AND '{end_date}'
                    ''')
-
-raw_views = raw_dateViews.sort_values(by="createdAt", ascending=True)
+    raw_views = full_raw_dateViews.sort_values(by="createdAt", ascending=True)
+else:
+    raw_views = raw_dateViews.sort_values(by="createdAt", ascending=True)
 
 
 contentViews = raw_views.groupby(["contentId", "createdAt"]).sum().reset_index()
@@ -162,29 +182,29 @@ modulo = modulo.assign(
 dadosConteudo = []
 dadosViewer = []
 dadosConteudo.append({
-            "Módulo":modulo.moduleName.values[0],
+            "Módulo":modulo.title.values[0],
             "Views":modulo.frcView.values[0],
             "Conteúdo":"Gratuito"
         })
 
 dadosConteudo.append({
-            "Módulo":modulo.moduleName.values[0],
+            "Módulo":modulo.title.values[0],
             "Views":modulo.pacView.values[0],
             "Conteúdo":"Pago"
         })
 
 dadosViewer.append({
-            "Módulo":modulo.moduleName.values[0],
+            "Módulo":modulo.title.values[0],
             "Views":modulo.ufrView.values[0],
             "Tipo de Visualização":"User: Free - Content: Free"
         })
 dadosViewer.append({
-            "Módulo":modulo.moduleName.values[0],
+            "Módulo":modulo.title.values[0],
             "Views":modulo.sfrView.values[0],
             "Tipo de Visualização":"User: Paid - Content: Free"
         })
 dadosViewer.append({
-            "Módulo":modulo.moduleName.values[0],
+            "Módulo":modulo.title.values[0],
             "Views":modulo.spaView.values[0],
             "Tipo de Visualização":"User: Paid - Content: Paid"
         })

@@ -4,7 +4,8 @@ import pandas as pd
 from datetime import date, datetime, time, timedelta
 from streamlit_product_card import product_card
 import pytz
-from streamlit_extras.stylable_container import stylable_container 
+from streamlit_extras.stylable_container import stylable_container
+
 
 
 # Estilizando o container principal
@@ -32,6 +33,7 @@ dates = dates.sort_values(by="createdAt", ascending=False)
 dates = pd.to_datetime(dates["createdAt"], format="%Y-%m-%d").dt.strftime("%d/%m/%y").tolist()
 dates = pd.DataFrame(dates, columns=["createdAt"])
 blank1, blank2, dia, blank4, clear , = st.columns(5)
+
 
 with dia:   
     with stylable_container(
@@ -78,9 +80,11 @@ start_date = datetime.combine(data_selecionada, time.min)
 end_date = datetime.combine(data_selecionada, time.max)
 
 conn = st.connection("sql")
+subscriptions = conn.query('SELECT "userId" FROM public."Subscription";')
 raw_dateViews = conn.query(f'''
                    SELECT 
                    "contentId",
+                     "userId",
                     "Content"."title" AS "contentTitle",
                     "watchUntil",
                     "totalViews",
@@ -245,8 +249,10 @@ quantidade_horas = Tabela["Data"].nunique()
 st.subheader("Dados do Módulo de hoje")
 
 
-col1,col2,col3= st.columns(3)
+col1,col2,col3 = st.columns(3)
 col4 = st.container()
+usuarios_unicos = raw_dateViews["userId"].nunique()
+usuarios_pagantes = raw_dateViews[raw_dateViews["userId"].isin(subscriptions["userId"])].userId.nunique()
 @st.dialog(f"Mais vistos do dia")
 def ranking_de_views_dia():
     st.markdown(
@@ -367,9 +373,9 @@ with col3:
     
 with col4:
     product_card(
-    product_name="Usuarios unicos",
-    description="",
-    price=str(3),
+    product_name="Usuarios Unicos",
+    description=f"Paid: {usuarios_pagantes} / Free: {usuarios_unicos - usuarios_pagantes}",
+    price=str(usuarios_unicos),
     styles={
         "card":{"height": "150px", "display": "flex", "flex-direction": "column", "justify-content": "space-around", "position": "relative", "align-items": "center"},
         "title": {"width": "80%", "font-size": "16px", "font-weight": "bold", "text-align": "center","position": "absolute", "top": "10%","left": "10%"},
@@ -377,4 +383,3 @@ with col4:
         "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
 )
-
