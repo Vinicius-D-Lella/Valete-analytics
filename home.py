@@ -99,8 +99,10 @@ raw_dateViews = conn.query(f'''
 today_content = conn.query(f'''
                             SELECT 
                                 "title",
-                                "publishedAt"
+                                "publishedAt",
+                                "Module"."name" AS "moduleName"
                             FROM public."Content"
+                            INNER JOIN public."Module" ON "Module"."id" = "Content"."moduleId"
                             WHERE "publishedAt" BETWEEN '{start_date + timedelta(hours=3)}' AND '{end_date + timedelta(hours=3)}'
                             AND "Content"."status" = 'PUBLISHED'
                            ''')
@@ -108,9 +110,11 @@ today_content = conn.query(f'''
 today_content_list = []
 
 for row in today_content.itertuples():
+
     today_content_list.append({
         "titulo": row.title,
-        "publicado": row.publishedAt - timedelta(hours=3)
+        "publicado": row.publishedAt - timedelta(hours=3),
+        "módulo": row.moduleName
     })
 today_content_list = pd.DataFrame(today_content_list)
 if not today_content_list.empty:
@@ -215,18 +219,21 @@ datas_conteudos = []
 
 if today_content_list.empty == False:
     for index, row in today_content_list.iterrows():
+
         if not row["publicado"].tz_localize(tz=sao_paulo_tz) > datetime.now().astimezone(tz=sao_paulo_tz):
             datas_conteudos.append({
                 "data": row["publicado"],
-                "titulo": row["titulo"]
+                "titulo": row["titulo"],
+                "módulo": row["módulo"]
         })
 df_marcadores = pd.DataFrame(datas_conteudos)
-
 linhaviziveis = alt.Chart(df_marcadores).mark_rule(size=2, color="white").encode(
     x="data:T",
     tooltip=[
         alt.Tooltip("data:T", title="Horário", format="%H:%M"),
-        alt.Tooltip("titulo:N", title="Titulo")
+        alt.Tooltip("titulo:N", title="Titulo"),
+        alt.Tooltip("módulo:N", title="Módulo")
+
     ]
    )
 
@@ -234,7 +241,8 @@ linhas_fundo = alt.Chart(df_marcadores).mark_rule(size=20,color="transparent", o
     x="data:T",
     tooltip=[
         alt.Tooltip("data:T", title="Horário", format="%H:%M"),
-        alt.Tooltip("titulo:N", title="Titulo")
+        alt.Tooltip("titulo:N", title="Titulo"),
+        alt.Tooltip("módulo:N", title="Módulo")
     ]
 )
 
