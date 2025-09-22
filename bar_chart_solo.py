@@ -61,8 +61,8 @@ if initialDate.createdAt[0] < date(2025,5,12):
 else:
     start_limit = initialDate.createdAt[0]
 start_date = start_limit
-end_date = today + pd.DateOffset(days=1)
-end_limit = today + pd.DateOffset(days=1)
+end_date = today
+end_limit = today
 
 with select_date:
     d = st.date_input(
@@ -78,6 +78,7 @@ if len(d) == 2:
     start_date = d[0]
     end_date = d[1]
 
+
 raw_dateViews = conn.query(f'''
                     SELECT 
                     "contentId",
@@ -87,7 +88,7 @@ raw_dateViews = conn.query(f'''
                     FROM public."ContentView"
                     WHERE "contentId" IN ({','.join(map(str, conteudos.id.values))})
                     AND "totalViews" > 0
-                    AND "createdAt" BETWEEN '{start_date}' AND '{end_date}'
+                    AND "createdAt" BETWEEN '{start_date}' AND '{end_date+pd.DateOffset(hours=23, minutes=59, seconds=59)}'
                     ''')
 
 if modulo["title"] == "Total":
@@ -99,7 +100,7 @@ if modulo["title"] == "Total":
                    CAST("createdAt" AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo' AS DATE) AS "createdAt"
                    FROM public."ContentView"
                    WHERE "totalViews" > 0
-                   AND "createdAt" BETWEEN '{start_date}' AND '{end_date}'
+                   AND "createdAt" BETWEEN '{start_date}' AND '{end_date+pd.DateOffset(hours=23, minutes=59, seconds=59)}'
                    ''')
     raw_views = full_raw_dateViews.sort_values(by="createdAt", ascending=True)
 else:

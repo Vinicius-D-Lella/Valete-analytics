@@ -31,6 +31,7 @@ tabelaModule = conn.query(f"""SELECT
                             FROM public."Module"
                            WHERE "createdAt" BETWEEN '{start_date}' AND '{end_date}'
                           ;""")
+
 conteudos = conn.query(f'''
                        SELECT
                            "Content"."id",
@@ -42,7 +43,7 @@ conteudos = conn.query(f'''
                        LEFT JOIN public."ContentView" ON "Content"."id" = "ContentView"."contentId"
                        INNER JOIN public."Module" ON "Content"."moduleId" = "Module"."id"
                        WHERE "totalViews" > 0
-                        AND "ContentView"."createdAt" BETWEEN '{start_date}' AND '{end_date}'
+                        AND "ContentView"."createdAt" BETWEEN '{start_date}' AND '{end_date+pd.DateOffset(hours=23, minutes=59, seconds=59)}'
                        GROUP BY "Content"."id", "Module"."name"
                        ORDER BY "totalViews" DESC
                        ''')

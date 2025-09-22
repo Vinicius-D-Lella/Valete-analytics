@@ -5,8 +5,8 @@ from datetime import date, datetime, time, timedelta
 from streamlit_product_card import product_card
 import pytz
 from streamlit_extras.stylable_container import stylable_container
-st.set_page_config(page_title="Resumo do Dia", layout="wide")
 
+st.set_page_config(page_title="Resumo do Dia", layout="wide")
 st.markdown("""
     <style>
         h1,h2,h3 {

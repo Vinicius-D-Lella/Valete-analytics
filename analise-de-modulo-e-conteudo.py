@@ -1,4 +1,5 @@
 import altair as alt
+import pytz
 import streamlit as st
 import pandas as pd
 from datetime import date, datetime, time, timedelta
@@ -6,6 +7,7 @@ from streamlit_product_card import product_card
 from ranking import tabelaModule
 
 tabelaModule = tabelaModule.rename(columns={"moduleName": "title", "moduleId": "id"})
+sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
 
 conn = st.connection("sql")
 
@@ -23,6 +25,7 @@ st.markdown("""
 if "Total" not in tabelaModule.title.values:
     tabelaModule.loc[len(tabelaModule)] = ["Total",1000000000,tabelaModule.totalModuleViews.values[1] - 1]
     tabelaModule = tabelaModule.sort_values(by="totalModuleViews", ascending=False)
+
 conn = st.connection("sql")
 st.title("Análise de Módulo")
 select_module, select_content = st.columns(2)
@@ -43,13 +46,16 @@ initialDate = conn.query(f'''
                    FROM public."ContentView"
                    WHERE "contentId" IN ({','.join(map(str, conteudos.id.values))})''')
 
+
+
 today = datetime.now()
 
 if initialDate.createdAt[0] < date(2025,5,12):
-    start_limit = date(2025,5,12)
+    start_limit = datetime(2025,5,12)
 else:
     start_limit = initialDate.createdAt[0]
-start_date = start_limit
+
+start_date = start_limit + timedelta(hours=3)
 end_date = today
 end_limit = today
 
@@ -67,7 +73,9 @@ if len(d) == 2:
     start_date = d[0]
     end_date = d[1]
 
-
+if end_date == start_date:
+    start_date = end_date - timedelta(days=1)
+    st.warning("Período ajustado para um dia.")
 
 
 raw_dateViews = conn.query(f'''
@@ -87,7 +95,7 @@ raw_dateViews = conn.query(f'''
                     WHERE "contentId" IN ({','.join(map(str, conteudos.id.values))})
                     AND "Content"."status" = 'PUBLISHED'
                     AND "totalViews" > 0
-                    AND "ContentView"."createdAt" BETWEEN '{start_date} 03:00:00' AND '{end_date + timedelta(days=1)} 03:00:00'
+                    AND "ContentView"."createdAt" BETWEEN '{start_date+pd.DateOffset(hours=3)}' AND '{end_date+pd.DateOffset(hours=26, minutes=59, seconds=59)}'
                     ''')
 
 if modulo == "Total":
@@ -107,7 +115,7 @@ if modulo == "Total":
                     INNER JOIN public."Module" ON "Module"."id" = "Content"."moduleId"
                     WHERE "totalViews" > 0
                     AND "Content"."status" = 'PUBLISHED'
-                    AND "ContentView"."createdAt" BETWEEN '{start_date} 03:00:00' AND '{end_date + timedelta(days=1)} 03:00:00'
+                    AND "ContentView"."createdAt" BETWEEN '{start_date+pd.DateOffset(hours=3)}' AND '{end_date+pd.DateOffset(hours=26, minutes=59, seconds=59)}'
                     ''')
     raw_views = full_raw_dateViews.sort_values(by="createdAt", ascending=True)
 else:
@@ -120,6 +128,7 @@ contentViews = pd.DataFrame(contentViews)
 contentRaking = contentViews.groupby(["contentTitle","moduleName"], as_index=False).agg({"totalViews": "sum"})
 contentRaking = pd.DataFrame(contentRaking)
 contentRaking = contentRaking.sort_values(by="totalViews", ascending=False)
+
 mais_visto = contentRaking.iloc[0]
 
 conteudos_do_modulo = conteudos_do_modulo.sort_values(by="publishedAt", ascending=False)
