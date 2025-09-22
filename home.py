@@ -5,13 +5,11 @@ from datetime import date, datetime, time, timedelta
 from streamlit_product_card import product_card
 import pytz
 from streamlit_extras.stylable_container import stylable_container
+st.set_page_config(page_title="Resumo do Dia", layout="wide")
 
-
-
-# Estilizando o container principal
 st.markdown("""
     <style>
-        .block-container {
+        h1,h2,h3 {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -23,6 +21,8 @@ st.markdown("""
 st.title("Resumo do Dia")
 
 sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+
+#info do select de datas
 end_date = datetime.today().astimezone(tz=sao_paulo_tz)
 start_date = datetime.combine(date.today(), time.min).astimezone(tz=sao_paulo_tz)
 first_day = date(2025,5,12)
@@ -32,6 +32,7 @@ dates = pd.DataFrame(dates, columns=["createdAt"])
 dates = dates.sort_values(by="createdAt", ascending=False)
 dates = pd.to_datetime(dates["createdAt"], format="%Y-%m-%d").dt.strftime("%d/%m/%y").tolist()
 dates = pd.DataFrame(dates, columns=["createdAt"])
+
 blank1, blank2, dia, blank4, clear , = st.columns(5)
 
 
@@ -256,6 +257,9 @@ quantidade_horas = Tabela["Data"].nunique()
 
 st.subheader("Dados do Módulo de hoje")
 
+moduleRakingViews = rankingViews.groupby(["moduleName"], as_index=False).agg({"totalViews": "sum"})
+moduleRakingViews = moduleRakingViews.sort_values(by="totalViews", ascending=False)
+
 
 col1,col2,col3 = st.columns(3)
 col4 = st.container()
@@ -390,4 +394,15 @@ with col4:
         "text": {"font-size": "16px", "font-weight": "bold", "text-align": "center"},
         "price": {"font-size": "24px", "font-weight": "bold", "text-align": "center","color":"#85BADF"},
         }
+)
+
+
+st.subheader("Ranking de Módulos")
+st.dataframe(
+    moduleRakingViews,
+    column_config={
+        "moduleName": "Módulo",
+        "totalViews": "Views",
+    },
+    hide_index=True,
 )
